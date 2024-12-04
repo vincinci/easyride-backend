@@ -1,0 +1,48 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  passwordHash   String
+  phoneNumber    String?
+  role           String   // 'rider' or 'driver'
+  currentLat     Float?   // Current latitude for drivers
+  currentLon     Float?   // Current longitude for drivers
+  lastLocationUpdate DateTime? // Last time the location was updated
+  isActive       Boolean  @default(true)
+  vehicles       Vehicle[]
+  ridesRequested Ride[]    @relation("RequestedRides")
+  ridesAccepted  Ride[]    @relation("AcceptedRides")
+}
+
+model Vehicle {
+  id          Int    @id @default(autoincrement())
+  userId      Int
+  make        String
+  model       String
+  year        Int
+  licensePlate String
+  color       String
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model Ride {
+  id              Int    @id @default(autoincrement())
+  riderId         Int
+  driverId        Int?
+  pickupLocation   String
+  dropoffLocation  String
+  status          String // 'requested', 'accepted', 'completed', 'canceled'
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  rider          User   @relation("RequestedRides", fields: [riderId], references: [id])
+  driver         User?  @relation("AcceptedRides", fields: [driverId], references: [id])
+}
